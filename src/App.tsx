@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   Droplets, 
   AlertCircle, 
@@ -92,7 +92,6 @@ const App = () => {
   const [history, setHistory] = useState(generateHistory());
   const [view, setView] = useState('dashboard');
   const [selectedDate, setSelectedDate] = useState('2026-04-21'); // Tuesday April 21, 2026
-  const [isSyncing, setIsSyncing] = useState(true);
   const [calendarOffset, setCalendarOffset] = useState(0); 
   
   const [activeEditor, setActiveEditor] = useState<string | null>(null);
@@ -110,11 +109,6 @@ const App = () => {
   });
 
   const [profileBuffer, setProfileBuffer] = useState(profile);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsSyncing(false), 2000);
-    return () => clearTimeout(timer);
-  }, []);
 
   const currentData = history[selectedDate] || { sips: 0, flags: [], sleep: [], injuries: [], notes: [] };
 
@@ -199,8 +193,6 @@ const App = () => {
       const hour = 7 + Math.floor(index * hourSpacing);
       const minute = Math.floor((index * hourSpacing % 1) * 60);
       
-      // First flagCount sips are flagged (distributed throughout the day)
-      const isFlagged = index < flagCount || (index % Math.ceil(sipCount / Math.max(flagCount, 1))) === 0 && index / sipCount < flagCount / sipCount;
       // Better distribution: mark sips as flagged if their index falls within flag distribution
       const shouldFlag = flagCount > 0 && index % Math.ceil(sipCount / flagCount) === 0 && index < flagCount * Math.ceil(sipCount / flagCount);
       
@@ -236,8 +228,6 @@ const App = () => {
       ...prev,
       [selectedDate]: { ...prev[selectedDate], ...updates }
     }));
-    setIsSyncing(true);
-    setTimeout(() => setIsSyncing(false), 800);
   };
 
   const MiniCalendar = () => {
@@ -400,7 +390,7 @@ const App = () => {
                             fontSize: '11px',
                             fontWeight: 'bold'
                           }}
-                          formatter={(value: any, name: string, props: any) => [
+                          formatter={(_value: any, _name: string, props: any) => [
                             props.payload.status === 'flagged' ? 'ATTENTION FLAGGED' : 'ATTENTION OPTIMAL',
                             `Sip #${props.payload.sipNumber}`
                           ]}
